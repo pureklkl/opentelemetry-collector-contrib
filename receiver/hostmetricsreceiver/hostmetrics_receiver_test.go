@@ -76,6 +76,12 @@ var systemSpecificMetrics = map[string][]string{
 	"solaris": {"system.filesystem.inodes.usage", "system.paging.faults"},
 }
 
+var archSystemSpecificMetrics = map[string]map[string][]string{
+	"arm64": {
+		"darwin": {"system.paging.usage"},
+	},
+}
+
 var factories = map[string]internal.ScraperFactory{
 	cpuscraper.TypeStr:        &cpuscraper.Factory{},
 	diskscraper.TypeStr:       &diskscraper.Factory{},
@@ -163,6 +169,7 @@ func assertIncludesExpectedMetrics(t *testing.T, got pmetric.Metrics) {
 		rm := rms.At(i)
 		metrics := getMetricSlice(t, rm)
 		returnedMetricNames := getReturnedMetricNames(metrics)
+		t.Log(returnedMetricNames)
 		assert.EqualValues(t, conventions.SchemaURL, rm.SchemaUrl(),
 			"SchemaURL is incorrect for metrics: %v", returnedMetricNames)
 		if rm.Resource().Attributes().Len() == 0 {
@@ -176,6 +183,7 @@ func assertIncludesExpectedMetrics(t *testing.T, got pmetric.Metrics) {
 	var expectedMetrics []string
 	expectedMetrics = append(expectedMetrics, archSpecificMetrics[runtime.GOARCH]...)
 	expectedMetrics = append(expectedMetrics, systemSpecificMetrics[runtime.GOOS]...)
+	expectedMetrics = append(expectedMetrics, archSystemSpecificMetrics[runtime.GOARCH][runtime.GOOS]...)
 	assert.Equal(t, len(expectedMetrics), len(returnedMetrics))
 	for _, expected := range expectedMetrics {
 		assert.Contains(t, returnedMetrics, expected)
