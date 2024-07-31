@@ -83,7 +83,8 @@ func TestScrape(t *testing.T) {
 				expectedMetrics = 3
 			}
 			// ARM runner has no swap:
-			if runtime.GOARCH == "arm64" {
+			// ARM darwin has all 4 metrics
+			if runtime.GOARCH == "arm64" && runtime.GOOS != "darwin" {
 				expectedMetrics = 2
 			}
 
