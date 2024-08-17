@@ -132,6 +132,14 @@ gotest-with-cover:
 	@$(MAKE) $(FOR_GROUP_TARGET) TARGET="test-with-cover"
 	$(GOCMD) tool covdata textfmt -i=./coverage/unit -o ./$(GROUP)-coverage.txt
 
+.PHONY: gobuildtest
+gobuildtest:
+	$(MAKE) $(FOR_GROUP_TARGET) TARGET="buildtest"
+
+.PHONY: gobuildtest
+gorunbuilttest:
+	$(MAKE) $(FOR_GROUP_TARGET) TARGET="runbuilttest"
+
 .PHONY: gointegration-test
 gointegration-test:
 	$(MAKE) $(FOR_GROUP_TARGET) TARGET="mod-integration-test"
@@ -516,6 +524,8 @@ clean:
 	find . -type f -name 'coverage.out' -delete
 	find . -type f -name 'integration-coverage.txt' -delete
 	find . -type f -name 'integration-coverage.html' -delete
+	@echo "Removing built binary files"
+	find . -type f -name 'builtunitetest.test' -delete
 
 .PHONY: generate-gh-issue-templates
 generate-gh-issue-templates:

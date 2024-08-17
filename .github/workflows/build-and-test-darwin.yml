@@ -14,7 +14,7 @@ env:
   # Make sure to exit early if cache segment download times out after 2 minutes.
   # We limit cache download as a whole to 5 minutes.
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 2
-  GOPROXY: https://goproxy1.cncf.selfactuated.dev,direct
+  #GOPROXY: https://goproxy1.cncf.selfactuated.dev,direct
 
 # Do not cancel this workflow on main. See https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/16616
 concurrency:
@@ -22,14 +22,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  darwin-unittest-matrix:
+  darwin-build-unittest-binary:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-12, macos-13, macos-14]
-    timeout-minutes: 30
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-14
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -51,8 +47,31 @@ jobs:
       - name: Install Tools
         if: steps.go-cache.outputs.cache-hit != 'true'
         run: make install-tools
+      - name: Build test binaries
+        run: make gobuildtest GROUP=cgo
+      - name: Zip test binaries
+        run: zip -r testbinaries.zip  . --include \*builtunitetest.test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testbinaries
+          path: ./testbinaries.zip
+          retention-days: 1
+  darwin-unittest-matrix:
+    if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12, macos-13]
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: testbinaries
+      - name: Unzip binaries to each module
+        run: unzip testbinaries.zip
       - name: Run Unit Tests
-        run: make -j2 gotest GROUP=cgo
+        run: make -j2 gorunbuilttest GROUP=cgo
   darwin-unittest:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
     runs-on: macos-latest
