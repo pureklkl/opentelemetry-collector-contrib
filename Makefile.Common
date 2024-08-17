@@ -140,7 +140,7 @@ do-unit-tests-with-cover: $(GOTESTSUM)
 .PHONY: buildtest
 buildtest:
 ifneq (,$(wildcard ./*.go))
-	GOARCH=$(GOTESTARCH) $(GOCMD) test -c -o builtunitetest.test
+	GOARCH=$(GOTESTARCH) CGO_ENABLED=1 $(GOCMD) test -c -o builtunitetest.test
 endif
 
 .PHONY: runbuilttest
