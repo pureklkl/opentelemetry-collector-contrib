@@ -34,6 +34,7 @@ GOTEST_OPT_WITH_INTEGRATION_COVERAGE=$(GOTEST_OPT_WITH_INTEGRATION) -coverprofil
 GOCMD?= go
 GOOS=$(shell $(GOCMD) env GOOS)
 GOARCH=$(shell $(GOCMD) env GOARCH)
+GOTESTARCH?=$(GOARCH)
 
 # In order to help reduce toil related to managing tooling for the open telemetry collector
 # this section of the makefile looks at only requiring command definitions to be defined
@@ -139,7 +140,7 @@ do-unit-tests-with-cover: $(GOTESTSUM)
 .PHONY: buildtest
 buildtest:
 ifneq (,$(wildcard ./*.go))
-	$(GOCMD) test -c -o builtunitetest.test
+	GOARCH=$(GOTESTARCH) $(GOCMD) test -c -o builtunitetest.test
 endif
 
 .PHONY: runbuilttest

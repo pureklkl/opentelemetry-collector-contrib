@@ -48,6 +48,8 @@ jobs:
         if: steps.go-cache.outputs.cache-hit != 'true'
         run: make install-tools
       - name: Build test binaries
+        env:
+          GOTESTARCH: amd64
         run: make gobuildtest GROUP=cgo
       - name: Zip test binaries
         run: zip -r testbinaries.zip  . --include \*builtunitetest.test
