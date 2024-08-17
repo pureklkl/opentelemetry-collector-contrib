@@ -28,8 +28,6 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - name: Setup QEMU
-        run: brew install qemu
       - uses: actions/setup-go@v5
         with:
           go-version: "~1.22.5"
