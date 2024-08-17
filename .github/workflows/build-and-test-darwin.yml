@@ -69,6 +69,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "~1.22.5"
+          cache: false
+      - name: Install Tools
+        if: steps.go-cache.outputs.cache-hit != 'true'
+        run: make install-tools
       - uses: actions/download-artifact@v4
         with:
           name: testbinaries
