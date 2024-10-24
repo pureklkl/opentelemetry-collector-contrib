@@ -23,7 +23,7 @@ concurrency:
 jobs:
   darwin-build-unittest-binary:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
@@ -46,18 +46,29 @@ jobs:
       - name: Install Tools
         if: steps.go-cache.outputs.cache-hit != 'true'
         run: make install-tools
-      - name: Build test binaries
+      - name: Build amd64 test binaries
         env:
           GOTESTARCH: amd64
         run: make gobuildtest GROUP=cgo
-      - name: Zip test binaries
+      - name: Zip amd64 test binaries
         run: zip -r testbinaries.zip  . --include \*builtunitetest.test
       - uses: actions/upload-artifact@v4
         with:
-          name: testbinaries
+          name: testbinariesamd64
           path: ./testbinaries.zip
           retention-days: 1
-  darwin-unittest-matrix:
+      - name: Build arm64 test binaries
+        env:
+          GOTESTARCH: arm64
+        run: make gobuildtest GROUP=cgo
+      - name: Zip arm64 test binaries
+        run: zip -r testbinaries.zip  . --include \*builtunitetest.test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testbinariesarm64
+          path: ./testbinaries.zip
+          retention-days: 1
+  darwin-amd-unittest-matrix:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
     needs: [darwin-build-unittest-binary]
     strategy:
@@ -77,7 +88,32 @@ jobs:
         run: make install-tools
       - uses: actions/download-artifact@v4
         with:
-          name: testbinaries
+          name: testbinariesamd64
+      - name: Unzip binaries to each module
+        run: unzip testbinaries.zip
+      - name: Run Unit Tests
+        run: make -j2 gorunbuilttest GROUP=cgo
+  darwin-arm-unittest-matrix:
+    if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
+    needs: [darwin-build-unittest-binary]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14]
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "~1.22.5"
+          cache: false
+      - name: Install Tools
+        if: steps.go-cache.outputs.cache-hit != 'true'
+        run: make install-tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: testbinariesarm64
       - name: Unzip binaries to each module
         run: unzip testbinaries.zip
       - name: Run Unit Tests
@@ -85,7 +121,7 @@ jobs:
   darwin-unittest:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
     runs-on: macos-latest
-    needs: [darwin-unittest-matrix]
+    needs: [darwin-unittest-matrix, darwin-arm-unittest-matrix]
     steps:
       - name: Print result
         run: echo ${{ needs.darwin-unittest-matrix.result }}
