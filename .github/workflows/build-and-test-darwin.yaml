@@ -121,13 +121,15 @@ jobs:
   darwin-unittest:
     if: ${{ github.actor != 'dependabot[bot]' && (contains(github.event.pull_request.labels.*.name, 'Run Darwin') || github.event_name == 'push' || github.event_name == 'merge_group') }}
     runs-on: macos-latest
-    needs: [darwin-unittest-matrix, darwin-arm-unittest-matrix]
+    needs: [darwin-amd-unittest-matrix, darwin-arm-unittest-matrix]
     steps:
-      - name: Print result
-        run: echo ${{ needs.darwin-unittest-matrix.result }}
+      - name: Print arm64 result
+        run: echo ${{ needs.darwin-arm-unittest-matrix.result }}
+      - name: Print amd64 result
+        run: echo ${{ needs.darwin-amd-unittest-matrix.result }}
       - name: Interpret result
         run: |
-          if [[ success == ${{ needs.darwin-unittest-matrix.result }} ]]
+          if [[ success == ${{ needs.darwin-arm-unittest-matrix.result }} && success == ${{ needs.darwin-amd-unittest-matrix.result }} ]]
           then
             echo "All matrix jobs passed!"
           else
